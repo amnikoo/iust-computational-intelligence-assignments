@@ -1,0 +1,101 @@
+FUNCTION_BLOCK Inverted_Pendulum
+
+    VAR_INPUT
+        theta : REAL; (*min=-180,max=180*)
+        theta_dot : REAL; (*min=-6,max=6*)
+        theta_dot_dot : REAL;
+        x : REAL;
+        x_dot : REAL; (*min=-250,max=250*)
+        x_dot_dot : REAL;
+    END_VAR
+
+    VAR_OUTPUT
+        F : REAL; (*min=-50,max=50*)
+    END_VAR
+
+    FUZZIFY theta
+        TERM neghigh := (310,0)(360,1);
+        TERM negmid := (190,0)(270,1)(320,0);
+		TERM neglow := (180,0)(190,1)(250,0);
+		TERM zero := (175,0)(180,1)(185,0);
+		TERM poslow := (100,0)(170,1)(180,0);
+        TERM posmid := (40,0)(90,1)(170,0);
+		TERM poshigh := (0,1)(50,0);
+    END_FUZZIFY
+
+    FUZZIFY theta_dot
+		TERM poshigh := (-6,1)(-2,0);
+		TERM poslow := (-3,0)(-1,1)(0,0);
+		TERM zero := (-0.5,0)(0,1)(0.5,0);
+		TERM neglow := (0,0)(1,1)(3,0);
+		TERM neghigh := (2,0)(6,1);
+	END_FUZZIFY
+
+    FUZZIFY x
+        TERM neghigh := (-60,1)(-30,0);
+        TERM neglow := (-30,0)(-15,1)(0,0);
+        TERM zero := (-4,0)(0,1)(4,0);
+        TERM poslow := (0,0)(15,1)(30,0);
+        TERM poshigh := (30,0)(60,1);
+    END_FUZZIFY
+
+    FUZZIFY x_dot
+        TERM neghigh := (-80,1)(-60,0);
+        TERM neglow := (-60,0)(-40,1)(0,0);
+        TERM zero := (-40,0)(0,1)(40,0);
+        TERM poslow := (0,0)(40,1)(60,0);
+        TERM poshigh := (60,0)(80,1);
+    END_FUZZIFY
+
+    DEFUZZIFY F
+        TERM neghigh := (-50,0)(-30,1)(-10,0);
+		TERM neglow := (-30,0)(-10,1)(0,0);
+		TERM zero := (-10,0)(0,1)(10,0);
+		TERM poslow := (0,0)(10,1)(30,0);
+		TERM poshigh := (10,0)(30,1)(50,0);
+
+		ACCU : MAX;
+		METHOD : COG;
+		DEFAULT := 0;
+    END_DEFUZZIFY
+
+    RULEBLOCK Inverted_Pendulum 
+        AND : MIN;
+        OR : MAX;
+
+		    RULE 1 : IF theta IS zero AND theta_dot IS zero AND x IS zero AND x_dot IS zero THEN F IS zero;
+		    RULE 2 : IF theta IS zero AND theta_dot IS neglow THEN F IS neglow;
+		    RULE 3 : IF theta IS zero AND theta_dot IS poslow THEN F IS poslow;
+		    RULE 4 : IF theta IS zero AND theta_dot IS neghigh THEN F IS neghigh;
+            RULE 5 : IF theta IS zero AND theta_dot IS poshigh THEN F IS poshigh;
+		    RULE 6 : IF theta IS neglow AND theta_dot IS zero THEN F IS neglow;
+		    RULE 7 : IF theta IS neglow AND theta_dot IS poslow THEN F IS zero;
+		    RULE 8 : IF theta IS poslow AND theta_dot IS zero THEN F IS poslow;
+		    RULE 9 : IF theta IS poslow AND theta_dot IS neglow THEN F IS zero;
+            RULE 10 : IF theta IS poslow AND theta_dot IS poslow THEN F IS poshigh;
+            RULE 11 : IF theta IS neglow AND theta_dot IS neglow THEN F IS neghigh;
+            RULE 12 : IF theta IS poshigh AND theta_dot IS poshigh THEN F IS poshigh;
+            RULE 13 : IF theta IS neghigh AND theta_dot IS neghigh THEN F IS neghigh;
+            RULE 14 : IF theta IS poshigh AND theta_dot IS poslow THEN F IS poshigh;
+            RULE 15 : IF theta IS neghigh AND theta_dot IS neglow THEN F IS neghigh;
+            RULE 16 : IF theta IS posmid AND (theta_dot IS zero OR theta_dot IS poslow OR theta_dot IS neglow) THEN F IS zero;
+            RULE 17 : IF theta IS negmid AND (theta_dot IS zero OR theta_dot IS poslow OR theta_dot IS neglow) THEN F IS zero;
+            RULE 18 : IF theta IS posmid AND theta_dot IS poshigh THEN F IS neglow;
+            RULE 19 : IF theta IS negmid AND theta_dot IS poshigh THEN F IS poslow;
+            RULE 20 : IF theta IS posmid AND theta_dot IS neghigh THEN F IS neglow;
+            RULE 21 : IF theta IS negmid AND theta_dot IS neghigh THEN F IS poslow;
+
+            RULE 22 : IF x_dot IS neghigh THEN F IS poshigh;
+            RULE 23 : IF x_dot IS neglow THEN F IS poslow;
+            RULE 24 : IF x_dot IS poshigh THEN F IS neglow;
+            RULE 25 : IF x_dot IS poslow THEN F IS neglow;
+
+            RULE 26 : IF x IS neghigh THEN F IS poshigh;
+            RULE 27 : IF x IS neglow THEN F IS poslow;
+            RULE 28 : IF x IS poshigh THEN F IS neglow;
+            RULE 29 : IF x IS poslow THEN F IS neglow;
+
+
+    END_RULEBLOCK
+
+END_FUNCTION_BLOCK
